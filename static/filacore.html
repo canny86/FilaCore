@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>FilaCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/static/media/filacore_transparent.png">
+  <style>
+        html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Orbitron, sans-serif;
+      background: #000;
+      color: white;
+      overflow-y: auto !important;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+      .main {
+      flex: 1;
+      padding: 16px;
+      padding-top: 60px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .sidebar {
+      width: 300px;
+      color: #00ffcc;
+      max-width: 80vw;
+      background: #111;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      z-index: 1000;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(.6,0,.4,1);
+    }
+    body.sidebar-open .sidebar {
+     transform: translateX(0);
+    }
+    body.sidebar-open .main {
+      margin-left: 300px; /* gleich wie sidebar width! */
+    }
+    .sidebar-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 12px 0;
+  background: none;
+  border: none;
+  color: #fff;
+  font-family: Orbitron, sans-serif;
+  font-size: 1.08em;
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.18s;
+  box-shadow: none;
+}
+.sidebar-btn:hover,
+.sidebar-btn:focus {
+  background: rgba(0,255,204,0.07);
+  color: #0ff;
+  outline: none;
+}
+  #neu {
+    display: none;
+    font-family: 'Orbitron', sans-serif;
+    color: #0ff;
+    background: #111;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 20px auto;
+    box-shadow: 0 0 30px #0ff3;
+  }
+  #neu h2 {
+    margin-top: 0;
+    color: #00ffcc;
+  }
+  #neu label {
+    display: block;
+    margin: 12px 0 4px;
+    font-weight: 600;
+  }
+  #neu select, #neu input[type="color"], #neu input[type="number"], #neu input[type="text"] {
+    width: 100%;
+    max-width: 320px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1.5px solid #00ffcc;
+    background: #111;
+    color: #0ff;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+  }
+  #neu button {
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: #00ffcc;
+    color: #111;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background-color 0.3s;
+  }
+  #neu button:hover {
+    background: #0cc;
+  }
+  #status {
+    margin-top: 15px;
+    font-weight: 700;
+    min-height: 24px;
+  }
+  #filament-actions-popup {
+  display: none;
+  position: fixed;          /* Popup bleibt beim Scrollen an derselben Stelle */
+  top: 50%;                /* Vertikale Mitte des Viewports */
+  left: 50%;               /* Horizontale Mitte des Viewports */
+  transform: translate(-50%, -50%); /* Exakte Zentrierung */
+  background: #111;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 320px;
+  box-shadow: 0 0 30px #0ff;
+  color: #0ff;
+  text-align: center;
+  z-index: 10000;          /* Über allen anderen Inhalten */
+}
+.filament-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+  color: #111;
+  background-color: #00ffcc; /* Default helle Cyanfarbe */
+  box-shadow: 0 0 8px #00ffccaa;
+}
+
+.filament-btn:hover,
+.filament-btn:focus {
+  background-color: #00b399; /* dunkleres Cyan beim Hover */
+  outline: none;
+  box-shadow: 0 0 12px #00b399cc;
+}
+
+.primary-btn {
+  /* Kann mit filament-btn zusammen benutzt werden, ggf. keine Extra-Stile nötig */
+}
+
+.delete-btn {
+  background-color: #f44; /* Rot */
+  color: #fff;
+  box-shadow: 0 0 8px #f44aaa;
+}
+
+.delete-btn:hover,
+.delete-btn:focus {
+  background-color: #d22; /* Dunkleres Rot beim Hover */
+  box-shadow: 0 0 12px #d22929cc;
+  outline: none;
+}
+  </style>
+</head>
+<body>
+<!-- Sidebar Toggle Button -->
+<button id="sidebarToggle" aria-label="Sidebar öffnen"
+  style="
+    position: fixed;
+    bottom: 18px;
+    left: 14px;
+    width: 28px;
+    height: 28px;
+    background: rgba(40,40,40,0.23);
+    border-radius: 50%;
+    z-index: 1101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    border: none;
+    color: #eee;
+    opacity: 0.55;
+    box-shadow: 0 0 6px #0002;
+    transition: opacity 0.2s;
+    cursor: pointer;
+  "
+  onmouseenter="this.style.opacity=1"
+  onmouseleave="this.style.opacity=0.55"
+>
+  ≡
+</button>
+
+<!-- Sidebar -->
+<nav id="sidebar" class="sidebar">
+  <h2 style="margin-top:0; margin-bottom:24px; font-weight: 700; font-size: 28px;">
+  FILA<span style="color:#fff;">CORE</span>
+</h2>
+
+<section style="margin-bottom: 24px;">
+  <h3 style="margin-bottom: 12px; font-weight: 600; cursor: default;">Drucker</h3>
+  <button onclick="showDrucker()" class="sidebar-btn">Drucker verwalten</button>
+  <button onclick="showStatusPanel()" class="sidebar-btn">Druckerstatus</button>
+</section>
+
+  <section style="margin-bottom: 24px;">
+    <h3 style="margin-bottom: 12px; font-weight: 600; cursor: default;">Filament</h3>
+    <button onclick="showStorage()" class="sidebar-btn">Filamentlager anzeigen</button>
+    <button onclick="showNeu()"class="sidebar-btn">Neues Filament</button>
+  </section>
+
+  <section>
+    <h3 style="margin-bottom: 12px; font-weight: 600; cursor: pointer;" onclick="showSystem()">System</h3>
+  </section>
+</nav>
+<!-- Sidebar PAnel -->
+<div id="mqtt-status" style="display:none"></div>
+<div id="active-printer-sidebar" style="display:none"></div> 
+<div class="main" style="font-family: 'Orbitron', sans-serif; color: #0ff; padding: 20px; max-width: 900px; margin: 20px auto;">
+
+  <!-- Startview -->
+  <div id="startview" style="text-align: center; margin-top: 100px;">
+    <img src="/static/media/filacore_transparent.png" alt="Filacore Logo" style="width: 320px; max-width: 80vw; height: auto; filter: drop-shadow(0 0 22px #0ff8);">
+    <p class="by-kingtendo-fancy" style="margin-top: 8px;">by KingTendo</p>
+  </div>
+
+  <!-- Druckerverwaltung Panel -->
+  <section id="section-printer" style="display:none; background: #111; padding: 20px; border-radius: 8px; margin-bottom: 40px;">
+    <h2 style="color: #00ffcc; margin-bottom: 20px;">Druckerverwaltung</h2>
+
+    <!-- Button: Drucker hinzufügen -->
+    <button onclick="showAddPrinterPopup()" style="background: #00ffcc; color: #111; font-weight: 700; border: none; border-radius: 6px; padding: 12px 18px; cursor: pointer; margin-bottom: 20px;">
+      ➕ Drucker hinzufügen
+    </button>
+
+    <!-- Popup: Neuer Drucker -->
+    <div id="addPrinterPopup" style="display:none; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 10000; overflow:auto;">
+      <div style="background:#111; color:#0ff; max-width: 420px; margin: 80px auto; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px #0ff;">
+        <h3 style="margin-top:0;">Drucker hinzufügen</h3>
+        <label for="serial">Serial *</label>
+        <input id="serial" placeholder="Serial" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius:6px; border: 1.5px solid #00ffcc; background:#111; color:#0ff; font-family: inherit; font-size: 14px;" />
+        <label for="access_code">Access Code *</label>
+        <input id="access_code" placeholder="Access Code" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius:6px; border: 1.5px solid #00ffcc; background:#111; color:#0ff; font-family: inherit; font-size: 14px;" />
+        <label for="ip">IP-Adresse *</label>
+        <input id="ip" placeholder="IP-Adresse" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius:6px; border: 1.5px solid #00ffcc; background:#111; color:#0ff; font-family: inherit; font-size: 14px;" />
+        <label for="druckertyp">Druckertyp</label>
+        <select id="druckertyp" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius:6px; border: 1.5px solid #00ffcc; background:#111; color:#0ff; font-family: inherit; font-size: 14px;">
+          <option value="">Druckertyp wählen</option>
+          <option value="Bambulab A1 mini">Bambulab A1 mini</option>
+          <option value="Bambulab A1">Bambulab A1</option>
+          <option value="Bambulab P1P">Bambulab P1P</option>
+          <option value="Bambulab P1S">Bambulab P1S</option>
+          <option value="Bambulab X1C">Bambulab X1C</option>
+          <option value="Bambulab H2d">Bambulab H2d</option>
+        </select>
+        <label for="name">Name (optional)</label>
+        <input id="name" placeholder="Name (optional)" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius:6px; border: 1.5px solid #00ffcc; background:#111; color:#0ff; font-family: inherit; font-size: 14px;" />
+        <div style="text-align: right;">
+          <button onclick="addPrinter();" style="background: #00ffcc; color: #111; font-weight: 700; border: none; border-radius: 6px; padding: 10px 16px; cursor: pointer; margin-right: 8px;">Speichern</button>
+          <button onclick="document.getElementById('addPrinterPopup').style.display = 'none';" style="background: #333; color: #0ff; font-weight: 700; border: none; border-radius: 6px; padding: 10px 16px; cursor: pointer;">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aktive Drucker -->
+    <div id="active-printers" style="display:flex; flex-wrap: wrap; gap: 16px; margin-top: 10px;">
+      <!-- Wird via JS befüllt -->
+    </div>
+  </section>
+  <!-- Druckerstatus Panel -->
+<section id="drucker-status-panel" style="display:none; background:#111; padding:20px; border-radius:8px;">
+  <h2 style="color:#00ffcc; margin-bottom:20px;">Druckerstatus</h2>
+  <div id="drucker-status-content" style="color:#0ff; font-size:16px;"></div>
+</section>
+<!-- Neues Filament Panel -->
+<section id="neu" style="display:none;">
+  <h2>Neues Filament hinzufügen</h2>
+  <label for="fcid">FCID</label>
+  <input id="fcid" type="text" readonly style="background:#222; color:#0ff; font-family: 'Orbitron', sans-serif; width: 320px; padding: 8px; border-radius: 6px; border: 1.5px solid #00ffcc; margin-bottom: 12px;">
+  <label for="material">Material</label>
+  <select id="material" required>
+    <option value="">Bitte wählen…</option>
+    <option value="PLA">PLA</option>
+    <option value="PETG">PETG</option>
+    <option value="TPU">TPU</option>
+    <option value="PCTG">PCTG</option>
+  </select>
+  
+  <label for="druckprofil">Druckprofil</label>
+  <select id="druckprofil" required>
+    <option value="">Bitte zuerst Material wählen…</option>
+  </select>
+  
+  <label for="farbe">Farbe (Hexcode)</label>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <input id="farbe" type="color" value="#00ffcc" style="width:48px;height:32px;">
+    <input id="farbeText" type="text" value="#00ffcc" maxlength="7" style="width:90px;" />
+  </div>
+  <div style="display:flex; gap: 20px; margin-bottom: 12px;">
+  <div style="flex:1;">
+    <label for="tempMin">Temp min (°C)</label>
+    <input id="tempMin" type="number" min="0" max="300" step="1" value="190" style="width: 100%;" />
+  </div>
+  <div style="flex:1;">
+    <label for="tempMax">Temp max (°C)</label>
+    <input id="tempMax" type="number" min="0" max="300" step="1" value="240" style="width: 100%;" />
+  </div>
+</div>
+  <label for="hersteller">Hersteller</label>
+  <select id="hersteller" required>
+    <option value="">Bitte wählen…</option>
+    <option value="Sunlu">Sunlu</option>
+    <option value="BambuLab">BambuLab</option>
+    <option value="Geeetech">Geeetech</option>
+    <option value="Jayo">Jayo</option>
+    <option value="eSun">eSun</option>
+    <option value="Generic">Generic</option>
+    <option value="3DJake">3DJake</option>
+    <option value="Prusament">Prusament</option>
+    <option value="Polymaker">Polymaker</option>
+  </select>
+  
+  <label for="preis">Preis (€ pro kg)</label>
+  <input id="preis" type="number" step="0.01" placeholder="z.B. 19.99" required>
+  
+  <button onclick="saveFilament()">Speichern</button>
+  <div id="status"></div>
+</section>
+  <!-- Filamentlager Panel -->
+  <section id="storage" style="display:none; background: #111; padding: 20px; border-radius: 8px;">
+    <h2 class="orbitron-title" style="text-align:center; display:flex; align-items:center; justify-content:center; gap:18px; font-size:28px; margin-top:0;">
+      <img src="static/media/filament2.png" alt="Icon" style="height:64px;">
+      Filamentlager
+      <img src="static/media/filament2.png" alt="Icon" style="height:64px;">
+    </h2>
+
+    <div class="filter-toolbar" style="margin-bottom: 20px; display:flex; flex-wrap: wrap; gap: 8px;">
+      <button class="filter-btn" data-type="material" data-value="PLA">PLA</button>
+      <button class="filter-btn" data-type="material" data-value="PETG">PETG</button>
+      <button class="filter-btn" data-type="hersteller" data-value="Sunlu">Sunlu</button>
+      <button class="filter-btn" data-type="hersteller" data-value="Jayo">Jayo</button>
+      <button class="filter-btn" data-type="hersteller" data-value="Geeetech">Geeetech</button>
+      <button class="filter-btn" data-type="hersteller" data-value="Bambulab">Bambulab</button>
+      <button class="filter-btn" data-type="nutzung" data-value="zuletzt">Zuletzt</button>
+      <button class="filter-btn" data-type="archiviert" data-value="true">Archiviert</button>
+      <button class="reset-filter" style="margin-left: 20px;">🔄 Filter zurücksetzen</button>
+      <button onclick="generateFarbkatalog()" class="button-farbkatalog">🎨 Farbkatalog</button>
+    </div>
+
+    <div id="filament-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+      <!-- Filamentkarten per JS -->
+    </div>
+  </section>
+</div>
+<div id="filament-actions-popup">
+  <h3>Aktionen für Filament</h3>
+  <p id="filament-actions-fcid" style="font-weight:700; margin-bottom:16px;"></p>
+  <button class="filament-btn primary-btn" onclick="showSetFilamentPopup()" style="margin-bottom:10px;">🎯 Laden</button>
+  <button class="filament-btn primary-btn" onclick="editFilament()" style="margin-bottom:10px;">✏️ Bearbeiten</button>
+  <button class="filament-btn delete-btn" onclick="deleteFilament()" style="background:#f44; color:#fff;">🗑 Löschen</button>
+  <button class="filament-btn primary-btn" onclick="closeFilamentActions()" style="margin-top:10px;">Schließen</button>
+</div>
+<div id="slot-popup" style="
+  display:none;
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  padding: 20px 24px;
+  border-radius: 8px;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 0 30px #0ff;
+  color: #0ff;
+  text-align: center;
+  z-index: 10001;
+">
+  <h4 style="margin-bottom: 16px;">Slot wählen</h4>
+  <div style="
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 20px;
+    margin-bottom: 16px;
+  ">
+    <button class="slot-btn" onclick="setFilament(1)" style="font-size: 24px; padding: 20px 0; border-radius: 8px; cursor: pointer;">1</button>
+    <button class="slot-btn" onclick="setFilament(2)" style="font-size: 24px; padding: 20px 0; border-radius: 8px; cursor: pointer;">2</button>
+    <button class="slot-btn" onclick="setFilament(3)" style="font-size: 24px; padding: 20px 0; border-radius: 8px; cursor: pointer;">3</button>
+    <button class="slot-btn" onclick="setFilament(4)" style="font-size: 24px; padding: 20px 0; border-radius: 8px; cursor: pointer;">4</button>
+  </div>
+  <div id="slot-popup-status" style="min-height: 24px; margin-bottom: 14px;"></div>
+  <button onclick="closeSlotPopup()" style="
+    margin: 0 auto;
+    display: block;
+    padding: 10px 24px;
+    border-radius: 6px;
+    background: #00ffcc;
+    color: #111;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    transition: background-color 0.3s ease;
+  "
+  onmouseover="this.style.background='#0cc'"
+  onmouseout="this.style.background='#00ffcc'"
+  >Abbrechen</button>
+</div>
+  <script src="https://unpkg.com/siema@1.5.1/dist/siema.min.js"></script>
+  <script>
+  let selectedFilamentFCID = null;
+    const activeFilters = {
+      material: null,
+      hersteller: null,
+      archiviert: null,
+      zeit: null,
+      nutzung: null
+    };
+    function showSection(name) {
+      document.getElementById("section-printer").style.display = name === "printer" ? "block" : "none";
+      document.getElementById("section-filament").style.display = name === "filament" ? "block" : "none";
+    }
+
+async function addPrinter() {
+    const serial = document.getElementById("serial").value.trim();
+    const access_code = document.getElementById("access_code").value.trim();
+    const ip = document.getElementById("ip").value.trim();
+    const druckertyp = document.getElementById("druckertyp").value;
+    const name = document.getElementById("name").value.trim();
+
+    if (!serial || !access_code || !ip) {
+      alert("Serial, Access Code und IP müssen ausgefüllt sein!");
+      return;
+    }
+
+    const payload = { serial, access_code, ip, druckertyp };
+    if (name) payload.name = name;
+
+    try {
+      const res = await fetch("/add_printer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        alert("✅ Drucker erfolgreich hinzugefügt!");
+        loadPrinters();
+        closeAddPrinterPopup();
+      } else {
+        alert("❌ Fehler: " + (data.error || "Unbekannter Fehler"));
+      }
+    } catch (e) {
+      alert("❌ Netzwerkfehler: " + e.message);
+    }
+  }
+  function closeAddPrinterPopup() {
+    document.getElementById("addPrinterPopup").style.display = "none";
+    clearInputs();
+  }
+
+  function clearInputs() {
+    document.getElementById("serial").value = "";
+    document.getElementById("access_code").value = "";
+    document.getElementById("ip").value = "";
+    document.getElementById("druckertyp").value = "";
+    document.getElementById("name").value = "";
+  }
+
+  async function setActive(serial) {
+    try {
+      const res = await fetch("/set_active_printer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serial }),
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      loadPrinters();
+    } catch (e) {
+      alert("Fehler beim Setzen: " + e.message);
+    }
+  }
+
+  async function deletePrinter(serial) {
+    if (!confirm(`Drucker mit Serial ${serial} wirklich löschen?`)) return;
+
+    try {
+      const res = await fetch("/delete_printer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serial }),
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      loadPrinters();
+    } catch (e) {
+      alert("Fehler beim Löschen: " + e.message);
+    }
+  }
+
+  // Automatisch laden bei Seitenstart
+  loadPrinters();
+
+
+async function loadActivePrinterSidebar() {
+  try {
+    const res = await fetch("/static/active_printer.json");
+    if (!res.ok) throw new Error("Kein aktiver Drucker");
+    const data = await res.json();
+    const name = data.name || data.serial || "Unbekannt";
+    document.getElementById("active-printer-sidebar").textContent = `Aktiver Drucker: ${name}`;
+  } catch {
+    document.getElementById("active-printer-sidebar").textContent = "Kein aktiver Drucker";
+  }
+}
+
+// Beim Seitenstart ausführen
+loadActivePrinterSidebar();
+    async function loadMqttState() {
+      try {
+        const res = await fetch("/read_mqtt_state");
+        const data = await res.json();
+
+        const container = document.getElementById("mqtt-status");
+
+        if (data.error) {
+          container.textContent = "Fehler beim Abrufen: " + data.error;
+          return;
+        }
+
+        container.textContent = JSON.stringify(data.data, null, 2);
+      } catch (e) {
+        document.getElementById("mqtt-status").textContent = "Netzwerkfehler: " + e.message;
+      }
+    }
+
+setInterval(() => {
+  // Nur MQTT-State aktualisieren, wenn das Druckerstatuspanel sichtbar ist!
+  const statusPanel = document.getElementById('drucker-status-panel');
+  if (statusPanel && statusPanel.style.display === 'block') {
+    loadMqttState();
+    updateDruckerStatus();
+  }
+  // KEIN loadPrinters() mehr hier!
+}, 5000);
+
+  async function loadPrinters() {
+    const container = document.getElementById("active-printers");
+    container.innerHTML = "Lade Drucker...";
+
+    try {
+      const res = await fetch("/get_printers");
+      const printers = await res.json();
+
+      if (!Array.isArray(printers) || printers.length === 0) {
+        container.innerHTML = "<p>Keine Drucker vorhanden.</p>";
+        return;
+      }
+
+      container.innerHTML = "";
+
+      printers.forEach(p => {
+        const imgSrc = `/static/media/${getImageNameForType(p.druckertyp)}`;
+        const isActive = p.active ? true : false;
+
+        const card = document.createElement("div");
+        card.style.background = "#222";
+        card.style.border = "1.5px solid #00ffcc";
+        card.style.borderRadius = "10px";
+        card.style.padding = "12px";
+        card.style.width = "140px";
+        card.style.textAlign = "center";
+        card.style.color = "#0ff";
+        card.style.userSelect = "none";
+
+        card.innerHTML = `
+          <img src="${imgSrc}" alt="${p.druckertyp}" style="width: 100%; border-radius: 8px; margin-bottom: 6px;">
+          <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">${p.name || p.druckertyp || "Unbekannt"}</div>
+          <div style="font-size: 13px; margin-bottom: 8px;">${isActive ? '<span style="color:#0c0;">Aktiv</span>' : '<span style="color:#666;">Inaktiv</span>'}</div>
+          <button onclick="setActive('${p.serial}')" style="background:#00ffcc; color:#111; border:none; border-radius:6px; padding: 6px 8px; margin-bottom: 6px; cursor: pointer; width: 100%;">Aktiv setzen</button>
+          <button onclick="deletePrinter('${p.serial}')" style="background:#f44; color:#fff; border:none; border-radius:6px; padding: 6px 8px; cursor: pointer; width: 100%;">🗑 Löschen</button>
+        `;
+
+        container.appendChild(card);
+      });
+
+    } catch (e) {
+      container.innerHTML = `<p style="color:#f44;">Fehler beim Laden: ${e.message}</p>`;
+    }
+  }
+function getImageNameForType(type) {
+    switch (type) {
+      case "Bambulab A1 mini":
+        return "a1mini.png";
+      case "Bambulab A1":
+        return "a1.png";
+      case "Bambulab P1P":
+        return "p1p.png";
+      case "Bambulab P1S":
+        return "p1s.png";
+      case "Bambulab X1C":
+        return "x1c.png";
+      case "Bambulab H2d":
+        return "h2d.png";
+      default:
+        return "printer_default.png";
+    }
+  }
+  async function saveFilament() {
+  const material = document.getElementById('material').value;
+  const druckprofil = document.getElementById('druckprofil').value;
+  const farbe = document.getElementById('farbe').value;
+  const hersteller = document.getElementById('hersteller').value.trim();
+  const preis = parseFloat(document.getElementById('preis').value);
+  const tempMin = parseInt(document.getElementById('tempMin').value);
+  const tempMax = parseInt(document.getElementById('tempMax').value);
+  const fcid = document.getElementById('fcid').value || ""; // falls ID im Panel sichtbar ist
+
+  if (!material || !druckprofil || !hersteller || isNaN(preis) || isNaN(tempMin) || isNaN(tempMax)) {
+    alert('Bitte alle Felder ausfüllen.');
+    return;
+  }
+
+  const payload = {
+    fcid,
+    material,
+    druckprofil,
+    farbe,
+    hersteller,
+    preis,
+    tempMin,
+    tempMax
+  };
+
+  const res = await fetch('/api/save_filament', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+
+  const status = document.getElementById('status');
+  if (data.success) {
+    status.textContent = '✅ Filament gespeichert.';
+    if (data.fcid) document.getElementById('fcid').value = data.fcid; // Rückgabe ID setzen
+  } else {
+    status.textContent = '❌ Fehler: ' + (data.error || 'Unbekannt');
+  }
+}
+function hideAllSections() {
+  document.getElementById("startview").style.display = "none";
+  document.getElementById("section-printer").style.display = "none";
+  document.getElementById("storage").style.display = "none";
+  document.getElementById("neu").style.display = "none";
+  document.getElementById("addPrinterPopup").style.display = "none";
+  document.getElementById("drucker-status-panel").style.display = "none";
+}
+function showNeu() {
+  hideAllSections();
+  document.getElementById("neu").style.display = "block";
+  generateFCID();
+}
+function showDrucker() {
+  hideAllSections();
+  document.getElementById("section-printer").style.display = "block";
+  loadPrinters();
+}
+  // Panel anzeigen
+  function showStorage() {
+    hideAllSections();
+    document.getElementById("storage").style.display = "block";
+    loadFilaments();
+  }
+function showSystem() {
+  alert("Systempanel kommt demnächst!");
+}
+function showAddPrinterPopup() {
+  // Popup über dem aktuellen Panel anzeigen
+  document.getElementById("addPrinterPopup").style.display = "block";
+}
+  // Daten aus JSON laden und Karten erstellen
+  async function loadFilaments() {
+  const container = document.getElementById("filament-grid");
+  container.innerHTML = "Lade Filamente...";
+  try {
+    const res = await fetch("/static/filacore_spools.json");
+    if (!res.ok) throw new Error("Datei nicht gefunden");
+
+    const filaments = await res.json();
+    const druckprofile = await fetch('/static/druckprofile.json').then(r => r.json());
+
+    if (filaments.length === 0) {
+      container.innerHTML = "<p>Keine Filamente gefunden.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+
+    filaments.forEach(fila => {
+      // Profilname für das spezifische Material suchen
+      const profilListe = druckprofile[fila.material] || [];
+      const profilObj = profilListe.find(p => p.value === fila.druckprofil);
+      const profilName = profilObj ? profilObj.label : fila.druckprofil || "–";
+
+      const card = document.createElement("div");
+      card.style.background = "#222";
+      card.style.border = "1px solid #00ffcc";
+      card.style.borderRadius = "8px";
+      card.style.padding = "12px";
+      card.style.cursor = "pointer";
+      card.style.userSelect = "none";
+
+      card.innerHTML = `
+        <div><strong>FCID:</strong> ${fila.fcid || "–"}</div>
+        <div><strong>Material:</strong> ${fila.material}</div>
+        <div><strong>Druckprofil:</strong> ${profilName}</div>
+        <div><strong>Farbe:</strong> <div style="width:24px; height:24px; display:inline-block; background:${fila.farbe}; border-radius:4px; vertical-align:middle;"></div></div>
+        <div><strong>Hersteller:</strong> ${fila.hersteller}</div>
+        <div><strong>Preis:</strong> ${fila.preis ? fila.preis + " € / kg" : "–"}</div>
+      `;
+
+      card.addEventListener('click', () => openFilamentActions(fila.fcid));
+      container.appendChild(card);
+    });
+  } catch (error) {
+    container.innerHTML = `<p style="color:#f44;">Fehler beim Laden: ${error.message}</p>`;
+  }
+}
+  async function updateDruckerStatus() {
+    try {
+      const res = await fetch('/read_mqtt_state');
+      const json = await res.json();
+      if (json.error) {
+        console.error("Fehler:", json.error);
+        return;
+      }
+
+      const data = json.data || {};
+      const print = data.print || {};
+
+      document.getElementById('job_name').textContent = print.job_name || '—';
+      document.getElementById('progress').textContent = print.progress?.toFixed(1) || '—';
+      document.getElementById('nozzle_temp').textContent = print.nozzle_temper?.toFixed(1) || '—';
+      document.getElementById('bed_temp').textContent = print.bed_temper?.toFixed(1) || '—';
+      document.getElementById('estimated_time').textContent = print.estimated_time || '—';
+      document.getElementById('printer_state').textContent = data.printer_state || '—';
+
+    } catch (e) {
+      console.error("Fetch Fehler:", e);
+    }
+  }
+
+async function setFilament(slot) {
+  if (!selectedFilamentFCID) {
+    alert('Kein Filament ausgewählt!');
+    return;
+  }
+
+  const statusDiv = document.getElementById('slot-popup-status');
+  statusDiv.textContent = 'Sende Befehl...';
+
+  const payload = {
+    slot,
+    fcid: selectedFilamentFCID
+  };
+
+  try {
+    const res = await fetch('/set_filament_mqtt', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      statusDiv.textContent = '✅ Filament erfolgreich geladen!';
+      setTimeout(() => {
+        closeSlotPopup();
+        closeFilamentActions();
+      }, 1500);
+    } else {
+      statusDiv.textContent = '❌ Fehler: ' + (data.error || 'Unbekannt');
+    }
+  } catch (e) {
+    statusDiv.textContent = '❌ Netzwerkfehler: ' + e.message;
+  }
+}
+function openFilamentActions(fcid) {
+  selectedFilamentFCID = fcid;
+  document.getElementById('filament-actions-fcid').textContent = `FCID: ${fcid}`; // mit s bei actions
+  document.getElementById('filament-actions-popup').style.display = 'block';      // mit s bei actions
+}
+
+function closeFilamentActions() {
+  document.getElementById('filament-actions-popup').style.display = 'none';       // mit s bei actions
+  selectedFilamentFCID = null;
+}
+function editFilament() {
+  alert(`Filament ${selectedFilamentFCID} bearbeiten...`);
+  // Logik zum Öffnen eines Bearbeitungs-Popups mit Filament-Daten
+  closeFilamentActions();
+}
+function showSetFilamentPopup() {
+  // Status zurücksetzen
+  document.getElementById('slot-popup-status').textContent = '';
+  // Slot-Popup anzeigen
+  document.getElementById('slot-popup').style.display = 'block';
+  // Action Bar schließen, falls offen
+  document.getElementById('filament-actions-popup').style.display = 'none';
+}
+
+function closeSlotPopup() {
+  // Slot-Popup schließen
+  document.getElementById('slot-popup').style.display = 'none';
+  // Optional: Action Bar wieder anzeigen (je nach gewünschtem Verhalten)
+  // document.getElementById('filament-actions-popup').style.display = 'block';
+}
+async function deleteFilament() {
+  if (!selectedFilamentFCID) {
+    alert("Kein Filament ausgewählt.");
+    return;
+  }
+  if (confirm(`Filament ${selectedFilamentFCID} wirklich löschen?`)) {
+    try {
+      const res = await fetch('/api/delete_filament', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fcid: selectedFilamentFCID }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        alert(`Filament ${selectedFilamentFCID} wurde gelöscht.`);
+        closeFilamentActions();
+        loadFilaments();  // Übersicht neu laden
+      } else {
+        alert(`Fehler: ${data.error || 'Unbekannt'}`);
+      }
+    } catch (e) {
+      alert("Netzwerkfehler beim Löschen: " + e.message);
+    }
+  }
+}
+async function showStatusPanel() {
+  hideAllSections();
+  const panel = document.getElementById("drucker-status-panel");
+  panel.style.display = "block";
+
+  const content = document.getElementById("drucker-status-content");
+  content.textContent = "Lade Daten...";
+
+  try {
+    const res = await fetch("/read_mqtt_state");
+    const json = await res.json();
+
+    if (json.error) {
+      content.textContent = "Fehler: " + json.error;
+      return;
+    }
+
+    const data = json.data || {};
+    const print = data.print || {};
+
+    content.innerHTML = `
+      <p><strong>Betttemperatur:</strong> ${print.bed_temper ?? "n.v."} °C</p>
+      <p><strong>Düsentemperatur:</strong> ${print.nozzle_temper ?? "n.v."} °C</p>
+      <p><strong>Fortschritt:</strong> ${print.progress ?? "n.v."} %</p>
+      <p><strong>Geschätzte Zeit:</strong> ${print.estimated_time ?? "n.v."} s</p>
+      <p><strong>Jobname:</strong> ${print.job_name ?? "n.v."}</p>
+    `;
+  } catch (e) {
+    content.textContent = "Fehler beim Laden: " + e.message;
+  }
+}
+window.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('sidebarToggle');
+  function toggleSidebar() {
+    document.body.classList.toggle('sidebar-open');
+  }
+  toggleBtn.addEventListener('click', toggleSidebar);
+
+  // Klick auf Buttons oder Bereichstitel schließt Sidebar wieder (außer System)
+  sidebar.querySelectorAll('button, h3').forEach(el => {
+    el.addEventListener('click', () => {
+      document.body.classList.remove('sidebar-open');
+    });
+  });
+});
+ // Funktionen für neue Filamente //
+let alleProfile = {};
+
+async function loadDruckprofile() {
+  try {
+    const res = await fetch("/static/druckprofile.json");
+    alleProfile = await res.json();
+  } catch (e) {
+    alleProfile = {};
+    alert("Druckprofile konnten nicht geladen werden!");
+  }
+}
+async function generateFCID() {
+  try {
+    const res = await fetch('/generate_fcid');
+    const data = await res.json();
+    if (data.fcid) {
+      document.getElementById('fcid').value = data.fcid;
+    } else {
+      document.getElementById('fcid').value = "Fehler beim Generieren";
+    }
+  } catch {
+    document.getElementById('fcid').value = "Fehler beim Generieren";
+  }
+}
+function updateDruckprofilDropdown() {
+  const material = document.getElementById('material').value;
+  const profilSel = document.getElementById('druckprofil');
+  profilSel.innerHTML = '<option value="">Bitte wählen…</option>';
+
+  if (!alleProfile[material]) return;
+  for (const profil of alleProfile[material]) {
+    const opt = document.createElement('option');
+    opt.value = profil.value || profil.label || "";
+    opt.textContent = profil.label || profil.value;
+    profilSel.appendChild(opt);
+  }
+}
+
+// Colorpicker/Textfeld sync
+function setupColorSync() {
+  const farbe = document.getElementById('farbe');
+  const farbeText = document.getElementById('farbeText');
+  farbe.addEventListener('input', () => farbeText.value = farbe.value);
+  farbeText.addEventListener('input', () => farbe.value = farbeText.value);
+}
+
+// Event-Setup nach DOM-Load
+document.addEventListener('DOMContentLoaded', async function() {
+  await loadDruckprofile();
+  setupColorSync();
+
+  // Materialwechsel aktualisiert Profile
+  document.getElementById('material').addEventListener('change', updateDruckprofilDropdown);
+});
+
+</script>
+</body>
+</html>

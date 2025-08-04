@@ -1,0 +1,40 @@
+{
+  "PLA": [
+    { "label": "BambuLab PLA Basic", "value": "GFA00" },
+    { "label": "BambuLab PLA CF", "value": "GFA50" },
+    { "label": "BambuLab PLA SILK", "value": "GFA05" },
+    { "label": "BambuLab PLA SILK+", "value": "GFA06" },
+    { "label": "BambuLab PLA Matte", "value": "GFA01" },
+    { "label": "BambuLab PLA Marble", "value": "GFA07" },
+    { "label": "BambuLab PLA Metal", "value": "GFA02" },
+    { "label": "BambuLab PLA Wood", "value": "GFA16" },
+    { "label": "Generic PLA", "value": "GFL99" },
+    { "label": "Generic PLA SILK", "value": "GFL96" },
+    { "label": "Generic PLA CF", "value": "GFL98" },
+    { "label": "Generic PLA HighSpeed", "value": "GFL95" },
+    { "label": "Sunlu PLA+", "value": "GFSNL03" },
+    { "label": "Sunlu PLA+ 2.0", "value": "GFSNL04" },
+    { "label": "Sunlu PLA Matte", "value": "GFSNL02" },
+    { "label": "Sunlu PLA Marble", "value": "GFSNL06" },
+    { "label": "Sunlu Wood PLA", "value": "GFSNL07" },
+    { "label": "Sunlu Silk PLA+", "value": "GFSNL05" }
+  ],
+  "PETG": [
+    { "label": "BambuLab PETG Basic", "value": "GFG00" },
+    { "label": "BambuLab PETG HF", "value": "GFG02" },
+    { "label": "Generic PETG", "value": "GFG99" },
+    { "label": "Generic PETG CF", "value": "GFG98" },
+    { "label": "Generic PETG HF", "value": "GFG96" },
+    { "label": "Sunlu PETG", "value": "GFSNL08" }
+  ],
+  "PCTG": [
+    { "label": "Generic PCTG", "value": "GFG97" }
+  ],
+  "TPU": [
+    { "label": "BambuLab TPU 90A", "value": "GFU03" },
+    { "label": "BambuLab TPU 95A", "value": "GFU01" },
+    { "label": "BambuLab TPU 95A HF", "value": "GFU00" },
+    { "label": "BambuLab TPU for AMS", "value": "GFU02" },
+    { "label": "Generic TPU", "value": "GFU99" }
+  ]
+}
