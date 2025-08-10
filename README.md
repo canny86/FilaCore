@@ -1,4 +1,4 @@
-## Screenshots
+#Filacore
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/cd038398-d1cd-4f2b-b4a8-8715221414ee" width="45%">
@@ -8,8 +8,6 @@
   <img src="https://github.com/user-attachments/assets/85e1da31-b601-4eb0-9912-39a583ad051a" width="45%">
   <img src="https://github.com/user-attachments/assets/edf124ec-b959-48a4-94c9-24b716e1e193" width="45%">
 </p>
-
-# FilaCore
 
 Leichtgewichtiges, lokales Filament- und Drucker-Management für Bambu A1 (u.a.).  
 Bedienoberfläche im Browser, keine Cloud, fokus auf „schnell & klar“.
