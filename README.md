@@ -6,7 +6,7 @@ Bedienoberfläche im Browser, keine Cloud, fokus auf „schnell & klar“.
 ## Features
 - Filamentlager mit Visitenkarten-UI (Hersteller, Profil, Core-ID, Temp min/max, TD, Preis)
 - Druckerstatus inkl. AMS (lokal)
-- Filament laden per MQTT-Bridge (`/set_filament_mqtt`)
+- Filament laden per MQTT-Bridge
 - Offline-first, läuft in LXC/Docker oder direkt auf Linux
 
 ## Installation (Release)
