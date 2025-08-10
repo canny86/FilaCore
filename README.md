@@ -1,3 +1,14 @@
+## Screenshots
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/cd038398-d1cd-4f2b-b4a8-8715221414ee" width="45%">
+  <img src="https://github.com/user-attachments/assets/4f345f13-8b0d-432c-b327-ce0e59f8b525" width="45%">
+</p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/85e1da31-b601-4eb0-9912-39a583ad051a" width="45%">
+  <img src="https://github.com/user-attachments/assets/edf124ec-b959-48a4-94c9-24b716e1e193" width="45%">
+</p>
+
 # FilaCore
 
 Leichtgewichtiges, lokales Filament- und Drucker-Management für Bambu A1 (u.a.).  
